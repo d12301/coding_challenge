@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum QuoteStatus {
+  QUOTE_GENERATED
+  MEDICAL_DECLARED
+  PREMIUM_PAID
+  POLICY_ISSUED
+}
+
+model Quote {
+  id                       String      @id @default(uuid())
+  age                      Int
+  hasPreExistingConditions Boolean
+  premium                  Decimal     @db.Decimal(10, 2)
+  status                   QuoteStatus @default(QUOTE_GENERATED)
+  expires_at               DateTime
+  created_at               DateTime    @default(now())
+
+  Policy                   Policy[]
+}
+
+model Policy {
+  id         String   @id @default(uuid())
+  quoteId    String
+  quote      Quote    @relation(fields: [quoteId], references: [id])
+  created_at DateTime @default(now())
+}
+
+model IdempotencyKey {
+  key        String   @id
+  created_at DateTime @default(now())
+}
