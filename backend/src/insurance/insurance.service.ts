@@ -70,7 +70,6 @@ export class InsuranceService {
     }
 
     try {
-      // Atomic transaction
       const result = await this.prisma.$transaction(async (tx) => {
         await tx.idempotencyKey.create({
           data: { key: idempotencyKey }
@@ -92,19 +91,16 @@ export class InsuranceService {
           throw new HttpException('Quote has expired', HttpStatus.BAD_REQUEST);
         }
 
-        // Transition to PREMIUM_PAID
         await tx.quote.update({
           where: { id: quoteId },
           data: { status: 'PREMIUM_PAID' },
         });
 
-        // Update quote status to final POLICY_ISSUED
         const updatedQuote = await tx.quote.update({
           where: { id: quoteId },
           data: { status: 'POLICY_ISSUED' },
         });
-
-        // Create policy
+        
         const policy = await tx.policy.create({
           data: {
             quoteId: quote.id,
